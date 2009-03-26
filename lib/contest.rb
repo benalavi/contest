@@ -15,48 +15,57 @@ end
 # method setup now iterates on the setup blocks. Note that all setup
 # blocks must be defined with the block syntax. Adding a setup instance
 # method defeats the purpose of this library.
-class Test::Unit::TestCase
-  def self.setup(&block)
-    setup_blocks << block
-  end
+module Contest
+  module ClassMethods
+    def setup(&block)
+      setup_blocks << block
+    end
 
-  def setup
-    self.class.setup_blocks.each do |block|
-      instance_eval(&block)
+    def context(name, &block)
+      subclass = Class.new(self.superclass)
+      subclass.setup_blocks.unshift(*setup_blocks)
+      subclass.class_eval(&block)
+      const_set(context_name(name), subclass)
+    end
+    alias_method :describe, :context
+
+    def test(name, &block)
+      define_method(test_name(name), &block)
+    end
+    alias_method :should, :test
+
+    # FIXME: these should be private!
+    # private
+    
+    def setup_blocks
+      @setup_blocks ||= []
+    end
+
+    def context_name(name)
+      "Test#{sanitize_name(name).gsub(/(^| )(\w)/) { $2.upcase }}".to_sym
+    end
+
+    def test_name(name)
+      "test_#{sanitize_name(name).gsub(/\s+/,'_')}".to_sym
+    end
+
+    def sanitize_name(name)
+      name.gsub(/\W+/, ' ').strip
     end
   end
-
-  def self.context(name, &block)
-    subclass = Class.new(self.superclass)
-    subclass.setup_blocks.unshift(*setup_blocks)
-    subclass.class_eval(&block)
-    const_set(context_name(name), subclass)
+  
+  module InstanceMethods
+    def setup
+      self.class.setup_blocks.each do |block|
+        instance_eval(&block)
+      end
+    end
   end
+end
 
-  def self.test(name, &block)
-    define_method(test_name(name), &block)
-  end
-
-  class << self
-    alias_method :should, :test
-    alias_method :describe, :context
-  end
-
-private
-
-  def self.setup_blocks
-    @setup_blocks ||= []
-  end
-
-  def self.context_name(name)
-    "Test#{sanitize_name(name).gsub(/(^| )(\w)/) { $2.upcase }}".to_sym
-  end
-
-  def self.test_name(name)
-    "test_#{sanitize_name(name).gsub(/\s+/,'_')}".to_sym
-  end
-
-  def self.sanitize_name(name)
-    name.gsub(/\W+/, ' ').strip
+unless defined?(Contest::TestCase)
+  class Contest::TestCase < Test::Unit::TestCase
+    extend  Contest::ClassMethods
+    include Contest::InstanceMethods
   end
 end
