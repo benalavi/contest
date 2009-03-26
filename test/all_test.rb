@@ -1,6 +1,6 @@
 require File.dirname(__FILE__) + "/../lib/contest"
 
-class FooTest < Contest::TestCase
+class FooTest < Contest::Unit::TestCase
   setup do
     @value = 1
   end
@@ -56,7 +56,7 @@ class FooTest < Contest::TestCase
   end
 end
 
-class BarTest < Contest::TestCase
+class BarTest < Contest::Unit::TestCase
   setup do
     @value = 1
   end
