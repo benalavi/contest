@@ -61,11 +61,11 @@ module Contest
       end
     end
   end
-end
-
-unless defined?(Contest::TestCase)
-  class Contest::TestCase < Test::Unit::TestCase
-    extend  Contest::ClassMethods
-    include Contest::InstanceMethods
+  
+  module Unit
+    class TestCase < Test::Unit::TestCase
+      extend  Contest::ClassMethods
+      include Contest::InstanceMethods
+    end
   end
 end

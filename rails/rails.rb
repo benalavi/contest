@@ -5,30 +5,34 @@ require "active_support/test_case"
 # ActiveStupor defines its own idiom for the class-level setup method
 # (using callback chains). This hack is to ensure that Contest users can
 # still call the setup method with a block.
-module Contest::ClassMethods
-  alias contest_setup setup
-end
-
 class ActiveSupport::TestCase
   class << self
     alias activesupport_setup setup
   end
 end
 
-class Contest::TestCase < ActiveSupport::TestCase
-  extend  Contest::ClassMethods
-  include Contest::InstanceMethods
+module Contest
+  module ClassMethods
+    alias contest_setup setup
+  end
   
-  def self.setup(*args, &block)
-    if args.empty?
-      contest_setup(&block)
-    else
-      activesupport_setup(*args)
+  module ActiveSupport
+    class TestCase < ::ActiveSupport::TestCase
+      extend  Contest::ClassMethods
+      include Contest::InstanceMethods
+
+      def self.setup(*args, &block)
+        if args.empty?
+          contest_setup(&block)
+        else
+          activesupport_setup(*args)
+        end
+      end
     end
   end
-end
-
-class Contest::FunctionalTestCase < ActionController::TestCase
-  extend  Contest::ClassMethods
-  include Contest::InstanceMethods
+  
+  class FunctionalTestCase < ActionController::TestCase
+    extend  Contest::ClassMethods
+    include Contest::InstanceMethods
+  end
 end
